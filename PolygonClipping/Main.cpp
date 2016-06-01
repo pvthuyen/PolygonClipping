@@ -124,8 +124,7 @@ void processInput() {
 
 	for (int i = 0; i < result.size(); ++i) {
 		cout << "____________________________________________\n";
-		for (int j = 0; j < result[i].size() - 1; ++j)
-			if (j == 0 || !(*result[i][j] == *result[i][j - 1]))
+		for (int j = 0; j < result[i].size(); ++j)
 				cout << result[i][j]->x << " " << result[i][j]->y << endl;
 	}
 }
@@ -149,19 +148,49 @@ void display() {
 	plot_axis();
 
 	for (int i = 0; i < source.size(); ++i) {
-		glBegin(GL_POLYGON);
 		glColor3f(0.0f, 0.0f, 1.0f);
-		for (int j = 0; j < source[i].size(); ++j)
-			glVertex2d(source[i][j]->x, source[i][j]->y);
-		glEnd();
+
+		GLUtriangulatorObj* tess = gluNewTess();
+
+		/* Nice casting here -- NOT!! */
+		gluTessCallback(tess, GLU_BEGIN, (void(__stdcall *) (void))glBegin);
+		gluTessCallback(tess, GLU_VERTEX, (void(__stdcall *) (void))glVertex3dv);
+		gluTessCallback(tess, GLU_END, (void(__stdcall *) (void))glEnd);
+
+		gluBeginPolygon(tess);
+		double(*v)[3] = new double[source[i].size()][3];
+		for (int j = 0; j < source[i].size(); ++j) {
+			v[j][0] = source[i][j]->x; v[j][1] = source[i][j]->y; v[j][2] = 0;
+		}
+		for (int j = 0; j < source[i].size(); ++j) {
+			gluTessVertex(tess, v[j], v[j]);
+		}
+		gluEndPolygon(tess);
+		gluDeleteTess(tess);
+		delete v;
 	}
 
 	for (int i = 0; i < clip.size(); ++i) {
-		glBegin(GL_POLYGON);
 		glColor3f(1.0f, 0.0f, 0.0f);
-		for (int j = 0; j < clip[i].size(); ++j)
-			glVertex2d(clip[i][j]->x, clip[i][j]->y);
-		glEnd();
+
+		GLUtriangulatorObj* tess = gluNewTess();
+
+		/* Nice casting here -- NOT!! */
+		gluTessCallback(tess, GLU_BEGIN, (void(__stdcall *) (void))glBegin);
+		gluTessCallback(tess, GLU_VERTEX, (void(__stdcall *) (void))glVertex3dv);
+		gluTessCallback(tess, GLU_END, (void(__stdcall *) (void))glEnd);
+
+		gluBeginPolygon(tess);
+		double(*v)[3] = new double[clip[i].size()][3];
+		for (int j = 0; j < clip[i].size(); ++j) {
+			v[j][0] = clip[i][j]->x; v[j][1] = clip[i][j]->y; v[j][2] = 0;
+		}
+		for (int j = 0; j < clip[i].size(); ++j) {
+			gluTessVertex(tess, v[j], v[j]);
+		}
+		gluEndPolygon(tess);
+		gluDeleteTess(tess);
+		delete v;
 	}
 
 	for (int i = 0; i < result.size(); ++i) {
@@ -178,12 +207,12 @@ void display() {
 		double (*v)[3] = new double[result[i].size()][3];
 		for (int j = 0; j < result[i].size(); ++j) {
 			v[j][0] = result[i][j]->x; v[j][1] = result[i][j]->y; v[j][2] = 0;
+			cout << result[i][j]->x << " " << result[i][j]->y << endl;
 		}
 		for (int j = 0; j < result[i].size(); ++j) {
 			gluTessVertex(tess, v[j], v[j]);
 		}
 		gluEndPolygon(tess);
-		glEndList();
 		gluDeleteTess(tess);
 		delete v;
 	}
